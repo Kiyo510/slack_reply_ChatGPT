@@ -7,13 +7,16 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
 )
 
-const slackApiBaseUrl = "https://slack.com/api/"
-const chatGptApiUrl = "https://api.openai.com/v1/chat/completions"
+const (
+	slackApiBaseUrl = "https://slack.com/api/"
+	chatGptApiUrl   = "https://api.openai.com/v1/chat/completions"
+)
 
 var slackBotToken string
 var chatGptApiKey string
@@ -80,22 +83,24 @@ func main() {
 	}
 
 	for _, message := range messages {
-		// TODO: testのため2にしているだけ。ここは0にする。
-		if message.ReplyCount >= 2 {
-			response, err := sendToChatGpt(message.Text)
-			if err != nil {
-				fmt.Println("Error sending message to ChatGPT:", err)
-				continue
-			}
-
-			err = postToSlackThread(channelId, message.ThreadTs, response)
-			if err != nil {
-				fmt.Println("Error posting to Slack thread:", err)
-				return
-			}
-
-			fmt.Println("Post Slack Thread Done")
+		if !isQuestion(message.Text) || message.ReplyCount > 0 {
+			continue
 		}
+
+		resp, err := sendToChatGpt(message.Text)
+		if err != nil {
+			fmt.Println("Error sending message to ChatGPT:", err)
+			continue
+		}
+
+		respWithMention := fmt.Sprintf("<@%s>\n%s", message.User, resp)
+		err = postToSlackThread(channelId, message.ThreadTs, respWithMention)
+		if err != nil {
+			fmt.Println("Error posting to Slack thread:", err)
+			return
+		}
+
+		fmt.Println("Post Slack Thread Done")
 	}
 }
 
@@ -134,6 +139,10 @@ func fetchSlackMessages(channelId string) ([]SlackMessage, error) {
 	}
 
 	return apiResponse.Messages, nil
+}
+
+func isQuestion(s string) bool {
+	return strings.Contains(s, "プログラミングの質問です。")
 }
 
 func postToSlackThread(channelId, threadTs, message string) error {
