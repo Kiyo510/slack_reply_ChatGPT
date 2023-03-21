@@ -105,7 +105,9 @@ func main() {
 }
 
 func fetchSlackMessages(channelId string) ([]SlackMessage, error) {
-	url := fmt.Sprintf("%sconversations.history?channel=%s", slackApiBaseUrl, channelId)
+	now := time.Now()
+	midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	url := fmt.Sprintf("%sconversations.history?channel=%s&oldest=%d", slackApiBaseUrl, channelId, midnight.Unix())
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
