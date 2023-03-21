@@ -13,7 +13,7 @@ import (
 )
 
 const slackApiBaseUrl = "https://slack.com/api/"
-const chatGptApiUrl = "https://api.openai.com/v1/engines/davinci-codex/completions"
+const chatGptApiUrl = "https://api.openai.com/v1/chat/completions"
 
 var slackBotToken string
 var chatGptApiKey string
@@ -40,13 +40,23 @@ type SlackPostMessageResponse struct {
 	Needed string `json:"needed"`
 }
 
-type ChatGptPrompt struct {
-	Prompt string `json:"prompt"`
+type ChatMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type ChatGPTPayLoad struct {
+	Model     string        `json:"model"`
+	Messages  []ChatMessage `json:"messages"`
+	MaxTokens int           `json:"max_tokens"`
 }
 
 type ChatGptResponse struct {
 	Choices []struct {
-		Text string `json:"text"`
+		Message struct {
+			Role    string `json:"role"`
+			Content string `json:"content"`
+		} `json:"message"`
 	} `json:"choices"`
 }
 
@@ -71,7 +81,7 @@ func main() {
 
 	for _, message := range messages {
 		// TODO: testのため2にしているだけ。ここは0にする。
-		if message.ReplyCount == 2 {
+		if message.ReplyCount >= 2 {
 			response, err := sendToChatGpt(message.Text)
 			if err != nil {
 				fmt.Println("Error sending message to ChatGPT:", err)
@@ -84,7 +94,7 @@ func main() {
 				return
 			}
 
-			fmt.Println("Post Slack Thred Done")
+			fmt.Println("Post Slack Thread Done")
 		}
 	}
 }
@@ -175,9 +185,17 @@ func postToSlackThread(channelId, threadTs, message string) error {
 }
 
 func sendToChatGpt(prompt string) (string, error) {
-	requestData := map[string]interface{}{
-		"prompt":     prompt,
-		"max_tokens": 50,
+	message := []ChatMessage{
+		{
+			Role:    "user",
+			Content: prompt,
+		},
+	}
+
+	requestData := ChatGPTPayLoad{
+		Model:     "gpt-3.5-turbo",
+		Messages:  message,
+		MaxTokens: 1000,
 	}
 
 	jsonData, err := json.Marshal(requestData)
@@ -196,6 +214,7 @@ func sendToChatGpt(prompt string) (string, error) {
 	client := &http.Client{
 		Timeout: time.Second * 10,
 	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
@@ -216,10 +235,8 @@ func sendToChatGpt(prompt string) (string, error) {
 	}
 
 	if len(apiResponse.Choices) == 0 {
-		if len(apiResponse.Choices) == 0 {
-			return "", fmt.Errorf("No response from ChatGPT")
-		}
+		return "", fmt.Errorf("no response from ChatGPT")
 	}
 
-	return apiResponse.Choices[0].Text, nil
+	return apiResponse.Choices[0].Message.Content, nil
 }
