@@ -144,7 +144,7 @@ func fetchSlackMessages(channelId string) ([]SlackMessage, error) {
 }
 
 func isQuestion(s string) bool {
-	return strings.Contains(s, "プログラミングの質問です。")
+	return strings.Contains(s, "質問です")
 }
 
 func postToSlackThread(channelId, threadTs, message string) error {
