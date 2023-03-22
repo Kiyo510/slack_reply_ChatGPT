@@ -26,6 +26,9 @@ jobs:
         run: |
           envsubst < .github/workflows/.env.template > .env
 
+      - name: Install all dependencies
+        run: go mod download
+
       - name: Build and Run main.go
         run: |
-          go run -v ./src/cmd/main.go
+         go run -v ./src/cmd/main.go
