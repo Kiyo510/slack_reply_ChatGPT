@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +18,7 @@ import (
 const (
 	slackApiBaseUrl = "https://slack.com/api/"
 	chatGptApiUrl   = "https://api.openai.com/v1/chat/completions"
+	AnswerLimit     = 10
 )
 
 var slackBotToken string
@@ -82,9 +85,30 @@ func main() {
 		return
 	}
 
+	sort.Slice(messages, func(i, j int) bool {
+		tsi, err := strconv.ParseFloat(messages[i].Ts, 64)
+		if err != nil {
+			return false
+		}
+
+		tsj, err := strconv.ParseFloat(messages[j].Ts, 64)
+		if err != nil {
+			return false
+		}
+
+		return tsi < tsj
+	})
+
+	var filterMessages []SlackMessage
 	for _, message := range messages {
-		if !isQuestion(message.Text) || message.ReplyCount > 0 {
-			continue
+		if isQuestion(message.Text) && message.ReplyCount == 0 {
+			filterMessages = append(filterMessages, message)
+		}
+	}
+
+	for i, message := range filterMessages {
+		if i > AnswerLimit {
+			break
 		}
 
 		resp, err := sendToChatGpt(message.Text)
