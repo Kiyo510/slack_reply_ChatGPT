@@ -130,8 +130,13 @@ func main() {
 
 func fetchSlackMessages(channelId string) ([]SlackMessage, error) {
 	now := time.Now()
-	midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	url := fmt.Sprintf("%sconversations.history?channel=%s&oldest=%d", slackApiBaseUrl, channelId, midnight.Unix())
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		return nil, err
+	}
+	yesterday := now.AddDate(0, 0, -1)
+	startTime := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 20, 0, 0, 0, jst)
+	url := fmt.Sprintf("%sconversations.history?channel=%s&oldest=%d", slackApiBaseUrl, channelId, startTime.Unix())
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
