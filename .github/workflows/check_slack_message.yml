@@ -14,6 +14,7 @@ jobs:
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
       CHAT_GPT_API_KEY: ${{ secrets.CHAT_GPT_API_KEY }}
+      TZ: "Asia/Tokyo"
 
     steps:
       - uses: actions/checkout@v3
