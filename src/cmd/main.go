@@ -273,7 +273,7 @@ func sendToChatGpt(prompt string) (string, error) {
 	}
 
 	if len(apiResponse.Choices) == 0 {
-		return "", fmt.Errorf("no response from ChatGPT")
+		return "APIからのレスポンスがありませんでした。APIのレート制限にひっかかった可能性がありんす。", nil
 	}
 
 	return apiResponse.Choices[0].Message.Content, nil
