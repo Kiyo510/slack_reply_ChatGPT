@@ -107,6 +107,7 @@ func main() {
 	}
 
 	for i, message := range filterMessages {
+		time.Sleep(time.Second * 60)
 		if i > AnswerLimit {
 			break
 		}
@@ -121,7 +122,7 @@ func main() {
 		err = postToSlackThread(channelId, message.ThreadTs, respWithMention)
 		if err != nil {
 			fmt.Println("Error posting to Slack thread:", err)
-			return
+			continue
 		}
 
 		fmt.Println("Post Slack Thread Done")
@@ -233,9 +234,8 @@ func sendToChatGpt(prompt string) (string, error) {
 	}
 
 	requestData := ChatGPTPayLoad{
-		Model:     "gpt-3.5-turbo",
-		Messages:  message,
-		MaxTokens: 1000,
+		Model:    "gpt-3.5-turbo",
+		Messages: message,
 	}
 
 	jsonData, err := json.Marshal(requestData)
@@ -251,9 +251,7 @@ func sendToChatGpt(prompt string) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", chatGptApiKey))
 
-	client := &http.Client{
-		Timeout: time.Second * 10,
-	}
+	client := &http.Client{Timeout: time.Minute * 15}
 
 	resp, err := client.Do(req)
 	if err != nil {
