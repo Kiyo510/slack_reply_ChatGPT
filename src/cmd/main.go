@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	slackApiBaseUrl = "https://slack.com/api/"
-	chatGptApiUrl   = "https://api.openai.com/v1/chat/completions"
+	SlackApiBaseUrl = "https://slack.com/api/"
+	ChatGptApiUrl   = "https://api.openai.com/v1/chat/completions"
 	AnswerLimit     = 10
 )
 
@@ -137,7 +137,7 @@ func fetchSlackMessages(channelId string) ([]SlackMessage, error) {
 	}
 	yesterday := now.AddDate(0, 0, -1)
 	startTime := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 20, 0, 0, 0, jst)
-	url := fmt.Sprintf("%sconversations.history?channel=%s&oldest=%d", slackApiBaseUrl, channelId, startTime.Unix())
+	url := fmt.Sprintf("%sconversations.history?channel=%s&oldest=%d", SlackApiBaseUrl, channelId, startTime.Unix())
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -178,7 +178,7 @@ func isQuestion(s string) bool {
 }
 
 func postToSlackThread(channelId, threadTs, message string) error {
-	url := fmt.Sprintf("%schat.postMessage", slackApiBaseUrl)
+	url := fmt.Sprintf("%schat.postMessage", SlackApiBaseUrl)
 
 	requestData := map[string]interface{}{
 		"token":     slackBotToken,
@@ -243,7 +243,7 @@ func sendToChatGpt(prompt string) (string, error) {
 		return "", err
 	}
 
-	req, err := http.NewRequest("POST", chatGptApiUrl, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", ChatGptApiUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", err
 	}
